@@ -92,10 +92,24 @@ public class UserController {
         return ResponseEntity.ok(mapperUtil.mapList(list, UserDTO.class));
     }
 
-    @PreAuthorize("@authorizeLogic.hasAccess('findActiveOperators')")
-    @GetMapping("/operators")
-    public ResponseEntity<List<UserDTO>> findActiveOperators() throws Exception {
-        List<User> list = userService.findActiveUsersByRole("OPERADOR");
+    @PreAuthorize("@authorizeLogic.hasAccess('findActiveContractors')")
+    @GetMapping("/contractors")
+    public ResponseEntity<List<UserDTO>> findActiveContractors() throws Exception {
+        List<User> list = userService.findActiveUsersByRole("CONTRATISTA");
+        return ResponseEntity.ok(mapperUtil.mapList(list, UserDTO.class));
+    }
+
+    @PreAuthorize("@authorizeLogic.hasAccess('findActiveResidents')")
+    @GetMapping("/residents")
+    public ResponseEntity<List<UserDTO>> findActiveResidents() throws Exception {
+        List<User> list = userService.findActiveUsersByRole("RESIDENTE");
+        return ResponseEntity.ok(mapperUtil.mapList(list, UserDTO.class));
+    }
+
+    @PreAuthorize("@authorizeLogic.hasAccess('findActiveAcquisitions')")
+    @GetMapping("/acquisitions")
+    public ResponseEntity<List<UserDTO>> findActiveAcquisitions() throws Exception {
+        List<User> list = userService.findActiveUsersByRole("ADQUISICIONES");
         return ResponseEntity.ok(mapperUtil.mapList(list, UserDTO.class));
     }
 }
