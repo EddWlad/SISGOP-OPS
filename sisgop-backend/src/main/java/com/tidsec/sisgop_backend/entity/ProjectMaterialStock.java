@@ -15,38 +15,32 @@ import java.util.UUID;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(
-        name = "detail_request",
+        name = "project_material_stock",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"id_materials_request", "id_material"})
+                @UniqueConstraint(columnNames = {"id_project", "id_material"})
         }
 )
-public class DetailRequest {
+public class ProjectMaterialStock {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(updatable = false, nullable = false, columnDefinition = "uuid")
     @EqualsAndHashCode.Include
-    private UUID idDetailRequest;
+    private UUID idProjectMaterialStock;
 
     @Column(nullable = false)
     private Integer status = 1;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_materials_request", nullable = false, columnDefinition = "uuid",
-            foreignKey = @ForeignKey(name = "FK_DETAILREQUEST_MATERIALSREQUEST"))
-    private MaterialRequest materialsRequest;
+    @JoinColumn(name = "id_project", nullable = false, columnDefinition = "uuid",
+            foreignKey = @ForeignKey(name = "FK_STOCK_PROJECT"))
+    private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_material", nullable = false, columnDefinition = "uuid",
-            foreignKey = @ForeignKey(name = "FK_DETAILREQUEST_MATERIAL"))
+            foreignKey = @ForeignKey(name = "FK_STOCK_MATERIAL"))
     private Material material;
 
-    @Column(name = "quantity_requested", nullable = false, precision = 14, scale = 4)
-    private BigDecimal quantityRequested;
-
-    @Column(name = "quantity_dispatched", nullable = false, precision = 14, scale = 4)
-    private BigDecimal quantityDispatched = BigDecimal.ZERO;
-
-    @Column(length = 500)
-    private String observation;
+    @Column(name = "quantity_on_hand", nullable = false, precision = 14, scale = 4)
+    private BigDecimal quantityOnHand = BigDecimal.ZERO;
 }

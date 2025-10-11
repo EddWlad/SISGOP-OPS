@@ -22,5 +22,7 @@ public interface IMaterialRequestService extends IGenericService<MaterialRequest
 
     MaterialRequest send(UUID idMaterialsRequest) throws Exception;
 
+    MaterialRequest reject(UUID idMaterialsRequest, String reason) throws Exception;
+
     Page<MaterialRequest> listPage(Pageable pageable);
 }

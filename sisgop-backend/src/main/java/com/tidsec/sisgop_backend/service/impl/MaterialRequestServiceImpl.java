@@ -153,18 +153,62 @@ public class MaterialRequestServiceImpl extends GenericServiceImpl<MaterialReque
         MaterialRequest mr = materialRequestRepository.findById(idMaterialsRequest)
                 .orElseThrow(() -> new ModelNotFoundException("MaterialsRequest no existe: " + idMaterialsRequest));
 
-        if (mr.getStatusRequest() != RequestMaterialStatus.BORRADOR) {
-            throw new IllegalStateException("Solo se puede ENVIAR una solicitud en BORRADOR");
+        // ÚNICO bloqueo por estado: RECHAZADA no se puede enviar
+        if (mr.getStatusRequest() == RequestMaterialStatus.RECHAZADA) {
+            throw new IllegalStateException("La solicitud no permite 'send' en estado RECHAZADA.");
         }
 
+        // Traer detalles activos
         List<DetailRequest> items = detailRequestRepository
                 .findByMaterialsRequest_IdMaterialsRequestAndStatusNot(idMaterialsRequest, 0);
-
         if (items.isEmpty()) {
-            throw new IllegalStateException("No se puede ENVIAR sin detalles");
+            throw new IllegalStateException("No se puede 'send' sin detalles.");
         }
 
-        mr.setStatusRequest(RequestMaterialStatus.ENVIADA);
+        boolean anyDispatched = false;
+        boolean allComplete = true;
+
+        for (DetailRequest d : items) {
+            var rq = d.getQuantityRequested();
+            var dp = d.getQuantityDispatched() == null ? java.math.BigDecimal.ZERO : d.getQuantityDispatched();
+
+            if (dp.signum() > 0) anyDispatched = true;
+            if (dp.compareTo(rq) < 0) allComplete = false;
+        }
+
+        // Si NO hay ningún despacho, no tiene sentido "enviar"
+        if (!anyDispatched) {
+            throw new IllegalStateException("No se puede 'send' sin despachos registrados.");
+        }
+
+        // Fijar estado real según lo ya despachado
+        if (allComplete) {
+            mr.setStatusRequest(RequestMaterialStatus.COMPLETA);
+        } else {
+            mr.setStatusRequest(RequestMaterialStatus.PARCIAL);
+        }
+
+        return materialRequestRepository.save(mr);
+    }
+
+    @Override
+    @Transactional
+    public MaterialRequest reject(UUID idMaterialsRequest, String reason) throws Exception {
+        MaterialRequest mr = materialRequestRepository.findById(idMaterialsRequest)
+                .orElseThrow(() -> new ModelNotFoundException("MaterialsRequest no existe: " + idMaterialsRequest));
+
+        var items = detailRequestRepository
+                .findByMaterialsRequest_IdMaterialsRequestAndStatusNot(idMaterialsRequest, 0);
+        boolean anyDispatched = items.stream()
+                .anyMatch(d -> d.getQuantityDispatched() != null && d.getQuantityDispatched().signum() > 0);
+        if (anyDispatched) {
+            throw new IllegalStateException("No se puede rechazar: ya tiene materiales despachados");
+        }
+
+        mr.setStatusRequest(RequestMaterialStatus.RECHAZADA);
+        if (reason != null && !reason.isBlank()) {
+            mr.setRequestObservation(reason);
+        }
         return materialRequestRepository.save(mr);
     }
 

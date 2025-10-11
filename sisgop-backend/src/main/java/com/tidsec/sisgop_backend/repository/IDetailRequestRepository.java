@@ -14,9 +14,5 @@ public interface IDetailRequestRepository extends IGenericRepository<DetailReque
             UUID idMaterialsRequest,
             UUID idMaterial
     );
-    boolean existsByMaterialsRequest_IdMaterialsRequestAndMaterial_IdMaterialAndStatusNot(
-            UUID idMaterialsRequest,
-            UUID idMaterial,
-            Integer status
-    );
+
 }

@@ -15,10 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -127,5 +124,14 @@ public class MaterialRequestController {
     public ResponseEntity<List<DetailRequestDTO>> findDetails(@PathVariable("id") UUID id) throws Exception {
         var details = service.findDetails(id);
         return ResponseEntity.ok(mapperUtil.mapList(details, DetailRequestDTO.class));
+    }
+
+    @PreAuthorize("@authorizeLogic.hasAccess('reject')")
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<MaterialRequestDTO> reject(@PathVariable("id") UUID id,
+                                                     @RequestBody(required = false) Map<String, String> body) throws Exception {
+        String reason = body != null ? body.get("reason") : null;
+        MaterialRequest rej = service.reject(id, reason);
+        return ResponseEntity.ok(mapperUtil.map(rej, MaterialRequestDTO.class));
     }
 }

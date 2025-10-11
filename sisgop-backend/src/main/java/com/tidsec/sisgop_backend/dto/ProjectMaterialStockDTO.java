@@ -10,14 +10,15 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class DetailRequestDTO {
+public class ProjectMaterialStockDTO {
     @EqualsAndHashCode.Include
-    private UUID idDetailRequest;
+    private UUID idProjectMaterialStock;
 
     private Integer status = 1;
-    private MaterialRequestDTO materialsRequest;
+
+    private ProjectDTO project;
+
     private MaterialDTO material;
-    private BigDecimal quantityRequested;
-    private BigDecimal quantityDispatched;
-    private String observation;
+
+    private BigDecimal quantityOnHand;
 }

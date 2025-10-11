@@ -10,14 +10,17 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class DetailRequestDTO {
+public class MaterialDispatchItemDTO {
     @EqualsAndHashCode.Include
-    private UUID idDetailRequest;
+    private UUID idMaterialDispatchItem;
 
     private Integer status = 1;
-    private MaterialRequestDTO materialsRequest;
+
+    private MaterialDispatchDTO materialDispatch; // opcional en request
+
     private MaterialDTO material;
-    private BigDecimal quantityRequested;
+
     private BigDecimal quantityDispatched;
+
     private String observation;
 }

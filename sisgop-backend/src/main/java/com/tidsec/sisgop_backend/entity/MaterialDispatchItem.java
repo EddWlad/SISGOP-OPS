@@ -6,7 +6,6 @@ import org.hibernate.annotations.GenericGenerator;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
 @Entity
 @Data
 @NoArgsConstructor
@@ -14,38 +13,30 @@ import java.util.UUID;
 @ToString
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(
-        name = "detail_request",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"id_materials_request", "id_material"})
-        }
-)
-public class DetailRequest {
+@Table(name = "material_dispatch_item")
+public class MaterialDispatchItem {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(updatable = false, nullable = false, columnDefinition = "uuid")
     @EqualsAndHashCode.Include
-    private UUID idDetailRequest;
+    private UUID idMaterialDispatchItem;
 
     @Column(nullable = false)
     private Integer status = 1;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_materials_request", nullable = false, columnDefinition = "uuid",
-            foreignKey = @ForeignKey(name = "FK_DETAILREQUEST_MATERIALSREQUEST"))
-    private MaterialRequest materialsRequest;
+    @JoinColumn(name = "id_material_dispatch", nullable = false, columnDefinition = "uuid",
+            foreignKey = @ForeignKey(name = "FK_DISPITEM_DISP"))
+    private MaterialDispatch materialDispatch;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_material", nullable = false, columnDefinition = "uuid",
-            foreignKey = @ForeignKey(name = "FK_DETAILREQUEST_MATERIAL"))
+            foreignKey = @ForeignKey(name = "FK_DISPITEM_MATERIAL"))
     private Material material;
 
-    @Column(name = "quantity_requested", nullable = false, precision = 14, scale = 4)
-    private BigDecimal quantityRequested;
-
     @Column(name = "quantity_dispatched", nullable = false, precision = 14, scale = 4)
-    private BigDecimal quantityDispatched = BigDecimal.ZERO;
+    private BigDecimal quantityDispatched;
 
     @Column(length = 500)
     private String observation;
