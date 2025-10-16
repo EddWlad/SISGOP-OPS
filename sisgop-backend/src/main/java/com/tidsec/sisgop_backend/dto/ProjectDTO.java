@@ -19,6 +19,7 @@ public class ProjectDTO {
     @EqualsAndHashCode.Include
     private UUID idProject;
 
+    private String projectCode;
     private Integer status = 1;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

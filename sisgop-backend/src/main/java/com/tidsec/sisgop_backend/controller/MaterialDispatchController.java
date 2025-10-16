@@ -1,10 +1,14 @@
 package com.tidsec.sisgop_backend.controller;
 
+import com.tidsec.sisgop_backend.dto.ContractorDispatchConfirmDTO;
+import com.tidsec.sisgop_backend.dto.ContractorDispatchConfirmItemDTO;
 import com.tidsec.sisgop_backend.dto.MaterialDispatchDTO;
 import com.tidsec.sisgop_backend.dto.MaterialDispatchItemDTO;
 import com.tidsec.sisgop_backend.entity.MaterialDispatch;
 import com.tidsec.sisgop_backend.entity.MaterialDispatchItem;
+import com.tidsec.sisgop_backend.entity.User;
 import com.tidsec.sisgop_backend.service.IMaterialDispatchService;
+import com.tidsec.sisgop_backend.service.IUserService;
 import com.tidsec.sisgop_backend.util.MapperUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +31,7 @@ import java.util.UUID;
 @RequestMapping("/material-dispatches")
 public class MaterialDispatchController {
     private final IMaterialDispatchService service;
+    private final IUserService userService;
     private final MapperUtil mapperUtil;
 
     // ---------- LISTAR TODOS (status != 0 lo maneja tu genérico) ----------
@@ -107,5 +116,53 @@ public class MaterialDispatchController {
 
         MaterialDispatch saved = service.updateWithItems(header, items);
         return ResponseEntity.ok(mapperUtil.map(saved, MaterialDispatchDTO.class));
+    }
+
+    @PreAuthorize("@authorizeLogic.hasAccess('contractorConfirm')")
+    @PostMapping("/{id}/contractor-confirm")
+    public ResponseEntity<MaterialDispatchDTO> contractorConfirm(
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody ContractorDispatchConfirmDTO body) throws Exception {
+
+        // Mapear ítems SOLO con campos del contratista (trazabilidad)
+        List<MaterialDispatchItem> ackItems = (body.getItems() == null ? List.<ContractorDispatchConfirmItemDTO>of() : body.getItems())
+                .stream()
+                .map(it -> {
+                    MaterialDispatchItem e = new MaterialDispatchItem();
+                    e.setMaterial(it.getMaterial());                      // {"idMaterial": "..."}
+                    e.setContractorChecked(it.getChecked());              // check
+                    e.setContractorObservation(it.getObservation());      // novedad por ítem
+                    e.setQuantityReceived(it.getQuantityReceived());      // opcional
+                    return e;
+                })
+                .toList();
+
+        // id del usuario autenticado (si ya lo pasas desde tu seguridad, úsalo aquí)
+        UUID idUserLogged = currentUserId();
+
+        MaterialDispatch saved = service.confirmReceipt(
+                id,
+                body.getReceiptState(),            // RECIBIDO | RECIBIDO_NOVEDADES
+                body.getObservation(),             // observación general
+                ackItems,                          // trazabilidad por ítem
+                idUserLogged                       // quien confirma
+        );
+
+        return ResponseEntity.ok(mapperUtil.map(saved, MaterialDispatchDTO.class));
+    }
+
+    private UUID currentUserId() throws Exception {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = auth.getPrincipal();
+        if (principal instanceof User u) {
+            return u.getIdUser();
+        }
+        return currentUserIdByUsername(auth.getName());
+    }
+
+    private UUID currentUserIdByUsername(String usernameOrEmail) throws Exception {
+        return userService.findByEmail(usernameOrEmail)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + usernameOrEmail))
+                .getIdUser();
     }
 }

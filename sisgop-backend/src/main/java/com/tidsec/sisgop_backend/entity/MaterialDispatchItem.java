@@ -40,4 +40,14 @@ public class MaterialDispatchItem {
 
     @Column(length = 500)
     private String observation;
+
+    @Column(name = "contractor_checked")
+    private Boolean contractorChecked; // check de verificación por ítem (UI móvil)
+
+    @Column(name = "contractor_item_observation", length = 500)
+    private String contractorObservation; // nota por ítem si hubo novedad
+
+    // Opcional, si quieres registrar cantidades realmente recibidas:
+    @Column(name = "quantity_received", precision = 14, scale = 4)
+    private java.math.BigDecimal quantityReceived;
 }

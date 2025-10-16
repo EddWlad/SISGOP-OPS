@@ -1,0 +1,23 @@
+package com.tidsec.sisgop_backend.dto;
+
+import com.tidsec.sisgop_backend.entity.Material;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class MaterialTransferExecuteItemDTO {
+    @NotNull(message = "material es requerido")
+    private Material material;  // {"idMaterial":"..."}
+
+    @NotNull @Positive
+    @Digits(integer = 10, fraction = 4)
+    private BigDecimal quantityToTransfer; // lo que realmente se mueve
+
+}

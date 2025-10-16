@@ -12,6 +12,7 @@ import com.tidsec.sisgop_backend.entity.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -117,6 +118,11 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements I
     @Override
     public List<User> findActiveUsersByRole(String roleName) throws Exception {
         return userRepository.findUsersByRoleNameAndStatus(roleName);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) throws Exception {
+        return userRepository.findByEmail(email);
     }
 
     @Transactional

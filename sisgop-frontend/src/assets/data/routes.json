@@ -1,0 +1,53 @@
+{
+  "routes": [
+    {
+      "path": "",
+      "title": "MENUITEMS.MAIN.TEXT",
+      "icon": "",
+      "class": "",
+      "groupTitle": true,
+      "submenu": []
+    },
+    {
+      "path": "advance-table",
+      "title": "MENUITEMS.ADVANCE-TABLE.TEXT",
+      "icon": "trello",
+      "class": "",
+      "groupTitle": false,
+      "submenu": []
+    },
+    {
+      "path": "",
+      "title": "-- Administracion",
+      "icon": "",
+      "class": "",
+      "groupTitle": true,
+      "submenu": []
+    },
+    {
+      "path": "",
+      "title": "User",
+      "icon": "users",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "submenu":[
+        {
+          "path": "user",
+          "title": "Users List",
+          "icon": "",
+          "class": "ml-menu",
+          "groupTitle": "false",
+          "submenu": []
+        },
+        {
+          "path": "role",
+          "title": "Roles List",
+          "icon": "",
+          "class": "ml-menu",
+          "groupTitle": "false",
+          "submenu": []
+        }
+      ]
+    }
+  ]
+}

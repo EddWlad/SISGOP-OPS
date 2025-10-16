@@ -18,7 +18,10 @@ public class AuthorizeLogic {
                  "findByIdMaterial", "findByIdSupplier",
                  "batch", "findByIdProject", "findByIdUser",
                  "findByStatus", "send", "findDetails", "reject",
-                 "findByIdRequest", "findItems", "findByIdProjectAndIdMaterial" -> "ROLE_ADMINISTRADOR";
+                 "findByIdRequest", "findItems", "findByIdProjectAndIdMaterial",
+                 "findByState", "findByProject", "approve", "contractorConfirm",
+                 "findByIdSource", "findByIdTarget", "authorize", "execute",
+                 "confirmReceipt"-> "ROLE_ADMINISTRADOR";
             case "findActiveResidents", "findActiveContractors" -> "ROLE_RESIDENTE,ROLE_ADMINISTRADOR";
             case "findActiveAcquisitions" -> "ROLE_ADQUISICIONES,ROLE_ADMINISTRADOR";
             default -> "ROOT";

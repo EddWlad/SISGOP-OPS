@@ -17,6 +17,8 @@ public class MaterialRequestDTO {
     @EqualsAndHashCode.Include
     private UUID idMaterialsRequest;
 
+    private String requestCode;
+
     private Integer status = 1;
     private RequestMaterialStatus statusRequest;
 

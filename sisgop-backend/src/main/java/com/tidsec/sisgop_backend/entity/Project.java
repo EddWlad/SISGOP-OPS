@@ -24,6 +24,9 @@ public class Project {
     @EqualsAndHashCode.Include
     private UUID idProject;
 
+    @Column(name = "project_code", length = 50, unique = true)
+    private String projectCode;
+
     @Column(nullable = false)
     private Integer status = 1;
 

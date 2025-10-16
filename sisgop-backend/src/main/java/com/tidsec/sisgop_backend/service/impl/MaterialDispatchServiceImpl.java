@@ -1,10 +1,12 @@
 package com.tidsec.sisgop_backend.service.impl;
 
+import com.tidsec.sisgop_backend.dto.enums.ContractorReceiptState;
 import com.tidsec.sisgop_backend.dto.enums.MovementStockType;
 import com.tidsec.sisgop_backend.dto.enums.RequestMaterialStatus;
 import com.tidsec.sisgop_backend.entity.*;
 import com.tidsec.sisgop_backend.exception.ModelNotFoundException;
 import com.tidsec.sisgop_backend.repository.*;
+import com.tidsec.sisgop_backend.service.ICodeGeneratorService;
 import com.tidsec.sisgop_backend.service.IMaterialDispatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -26,6 +29,7 @@ public class MaterialDispatchServiceImpl extends GenericServiceImpl<MaterialDisp
 
     private final IMaterialRequestRepository requestRepository;
     private final IDetailRequestRepository detailRequestRepository;
+    private final ICodeGeneratorService codeGeneratorService;
 
     private final IProjectRepository projectRepository;
     private final IMaterialRepository materialRepository;
@@ -90,6 +94,10 @@ public class MaterialDispatchServiceImpl extends GenericServiceImpl<MaterialDisp
         header.setMaterialRequest(materialRequest);
         header.setDispatchedBy(dispatchedBy);
         if (header.getStatus() == null) header.setStatus(1);
+
+        if (header.getDispatchCode() == null || header.getDispatchCode().isBlank()) {
+            header.setDispatchCode(codeGeneratorService.nextMaterialDispatchCode());
+        }
 
         // Guardar cabecera
         MaterialDispatch savedHeader = dispatchRepository.save(header);
@@ -455,5 +463,89 @@ public class MaterialDispatchServiceImpl extends GenericServiceImpl<MaterialDisp
     @Override
     public Page<MaterialDispatch> listPage(Pageable pageable) {
         return dispatchRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional
+    public MaterialDispatch confirmReceipt(UUID idDispatch,
+                                           ContractorReceiptState state,
+                                           String headerObservation,
+                                           List<MaterialDispatchItem> itemsForAck,
+                                           UUID idUserWhoConfirms) throws Exception {
+        if (idDispatch == null) throw new IllegalArgumentException("idMaterialDispatch es requerido");
+        if (state == null || (state != ContractorReceiptState.RECIBIDO
+                && state != ContractorReceiptState.RECIBIDO_NOVEDADES)) {
+            throw new IllegalArgumentException("receiptState inválido");
+        }
+
+        // 1) Cabecera
+        MaterialDispatch disp = dispatchRepository.findById(idDispatch)
+                .orElseThrow(() -> new ModelNotFoundException("MaterialDispatch no existe: " + idDispatch));
+
+        if (disp.getContractorReceiptState() != null
+                && disp.getContractorReceiptState() != ContractorReceiptState.PENDIENTE) {
+            throw new IllegalStateException("El despacho ya fue confirmado previamente");
+        }
+
+        // 2) Ítems activos del despacho
+        List<MaterialDispatchItem> existingItems =
+                dispatchItemRepository.findByMaterialDispatch_IdMaterialDispatchAndStatusNot(idDispatch, 0);
+
+        Map<UUID, MaterialDispatchItem> byMaterial = new HashMap<>();
+        for (MaterialDispatchItem it : existingItems) {
+            byMaterial.put(it.getMaterial().getIdMaterial(), it);
+        }
+
+        boolean anyNovelty = false;
+        boolean allChecked = true;
+
+        if (itemsForAck != null) {
+            for (MaterialDispatchItem ack : itemsForAck) {
+                UUID idMat = Optional.ofNullable(ack.getMaterial())
+                        .map(Material::getIdMaterial)
+                        .orElseThrow(() -> new IllegalArgumentException("material es requerido en items"));
+
+                MaterialDispatchItem target = Optional.ofNullable(byMaterial.get(idMat))
+                        .orElseThrow(() -> new IllegalArgumentException("Material no pertenece al despacho"));
+
+                // Solo campos del contratista (trazabilidad, NO stock)
+                target.setContractorChecked(ack.getContractorChecked());
+                target.setContractorObservation(ack.getContractorObservation());
+                target.setQuantityReceived(ack.getQuantityReceived());
+
+                dispatchItemRepository.save(target);
+
+                boolean checked = Boolean.TRUE.equals(ack.getContractorChecked());
+                String obs = ack.getContractorObservation();
+
+                if (!checked) allChecked = false;
+                if ((obs != null && !obs.isBlank()) || ack.getQuantityReceived() != null) {
+                    anyNovelty = true;
+                }
+            }
+        }
+
+        if (state == ContractorReceiptState.RECIBIDO) {
+            if (!allChecked || anyNovelty) {
+                throw new IllegalStateException("Para RECIBIDO, todos los ítems deben estar verificados y sin novedades.");
+            }
+        } else { // RECIBIDO_NOVEDADES
+            if (!anyNovelty && allChecked) {
+                throw new IllegalStateException("Para RECIBIDO_NOVEDADES, registra al menos una novedad en los ítems.");
+            }
+        }
+
+        // 3) Cabecera: estado/usuario/fechas/obs
+        disp.setContractorReceiptState(state);
+        disp.setContractorObservation(headerObservation);
+        disp.setContractorReceivedAt(LocalDateTime.now());
+
+        if (idUserWhoConfirms != null) {
+            User u = userRepository.findById(idUserWhoConfirms)
+                    .orElseThrow(() -> new ModelNotFoundException("User no existe: " + idUserWhoConfirms));
+            disp.setContractorReceivedBy(u);
+        }
+
+        return dispatchRepository.save(disp);
     }
 }

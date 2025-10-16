@@ -1,5 +1,6 @@
 package com.tidsec.sisgop_backend.dto;
 
+import jakarta.validation.constraints.Digits;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -23,4 +24,9 @@ public class MaterialDispatchItemDTO {
     private BigDecimal quantityDispatched;
 
     private String observation;
+
+    private Boolean contractorChecked;
+    private String contractorObservation;
+    @Digits(integer = 10, fraction = 4)
+    private BigDecimal quantityReceived;
 }

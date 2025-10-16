@@ -4,6 +4,7 @@ import com.tidsec.sisgop_backend.dto.enums.RequestMaterialStatus;
 import com.tidsec.sisgop_backend.entity.*;
 import com.tidsec.sisgop_backend.exception.ModelNotFoundException;
 import com.tidsec.sisgop_backend.repository.*;
+import com.tidsec.sisgop_backend.service.ICodeGeneratorService;
 import com.tidsec.sisgop_backend.service.IMaterialRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ public class MaterialRequestServiceImpl extends GenericServiceImpl<MaterialReque
 
     private final IMaterialRequestRepository materialRequestRepository;
     private final IDetailRequestRepository detailRequestRepository;
+    private final ICodeGeneratorService codeGeneratorService;
     private final IMaterialRepository materialRepository;
     private final IProjectRepository projectRepository;
     private final IUserRepository userRepository;
@@ -69,6 +71,10 @@ public class MaterialRequestServiceImpl extends GenericServiceImpl<MaterialReque
         header.setUser(user);
         if (header.getStatusRequest() == null) header.setStatusRequest(RequestMaterialStatus.BORRADOR);
         if (header.getStatus() == null) header.setStatus(1);
+
+        if (header.getRequestCode() == null || header.getRequestCode().isBlank()) {
+            header.setRequestCode(codeGeneratorService.nextMaterialRequestCode());
+        }
 
         MaterialRequest savedHeader = materialRequestRepository.save(header);
         upsertDetails(savedHeader, details);

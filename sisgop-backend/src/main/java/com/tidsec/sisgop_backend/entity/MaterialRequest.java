@@ -25,6 +25,9 @@ public class MaterialRequest {
     @EqualsAndHashCode.Include
     private UUID idMaterialsRequest;
 
+    @Column(name = "request_code", length = 30, unique = true, nullable = false, updatable = false)
+    private String requestCode;
+
     @Column(nullable = false)
     private Integer status = 1;
 
