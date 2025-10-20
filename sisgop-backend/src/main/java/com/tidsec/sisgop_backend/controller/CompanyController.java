@@ -18,7 +18,12 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -89,12 +94,59 @@ public class CompanyController {
 
     }
 
-    private File convertToFile(MultipartFile multipartFile) throws Exception{
-        File file = new File(multipartFile.getOriginalFilename());
-        FileOutputStream outputStream = new FileOutputStream(file);
-        outputStream.write(multipartFile.getBytes());
-        outputStream.close();
+    private File convertToFile(MultipartFile multipartFile) throws Exception {
+        // 1) Construir un sufijo correcto para el temp (extensión del archivo o .tmp)
+        String original = multipartFile.getOriginalFilename();
+        String suffix = ".tmp";
+        if (original != null && original.contains(".")) {
+            suffix = original.substring(original.lastIndexOf("."));
+            if (suffix.length() > 10) { // edge case raro de nombres sin extensión "normales"
+                suffix = ".tmp";
+            }
+        }
+
+        // 2) Crear archivo en directorio temporal del sistema (NO en el proyecto)
+        Path temp = Files.createTempFile("sisgop_", suffix);
+
+        // 3) Escribir bytes (sin dejarlo abierto)
+        try (OutputStream os = Files.newOutputStream(
+                temp, StandardOpenOption.TRUNCATE_EXISTING)) {
+            os.write(multipartFile.getBytes());
+        }
+
+        File file = temp.toFile();
+
+        // 4) Marcar para eliminar al cerrar la JVM (fallback)
+        file.deleteOnExit();
+
+        // 5) Programar una limpieza proactiva (daemon) por si nadie lo borra antes
+        scheduleTempDeletion(file, Duration.ofMinutes(10));
+        // puedes bajar a 2–5 minutos si quieres más agresivo
+
         return file;
+    }
+
+    private void scheduleTempDeletion(File file, Duration delay) {
+        Thread cleaner = new Thread(() -> {
+            try {
+                Thread.sleep(delay.toMillis());
+                try {
+                    // intenta borrar; si está en uso, reintenta un par de veces
+                    for (int i = 0; i < 3 && file.exists(); i++) {
+                        if (!file.delete()) {
+                            Thread.sleep(1500);
+                        } else {
+                            break;
+                        }
+                    }
+                } catch (InterruptedException ignored) {}
+            } catch (InterruptedException ignored) {
+                // Si interrumpen el sleep, igual intentamos borrar una vez
+                if (file.exists()) file.delete();
+            }
+        }, "sisgop-temp-file-cleaner");
+        cleaner.setDaemon(true); // no bloquea el cierre de la app
+        cleaner.start();
     }
 
     @PreAuthorize("@authorizeLogic.hasAccess('pageable')")
