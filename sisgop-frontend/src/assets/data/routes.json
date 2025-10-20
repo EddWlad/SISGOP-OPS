@@ -30,10 +30,43 @@
       "icon": "users",
       "class": "menu-toggle",
       "groupTitle": false,
-      "submenu":[
+      "submenu": [
         {
           "path": "user",
           "title": "Users List",
+          "icon": "",
+          "class": "ml-menu",
+          "groupTitle": "false",
+          "submenu": []
+        },
+        {
+          "path": "role",
+          "title": "Roles List",
+          "icon": "",
+          "class": "ml-menu",
+          "groupTitle": "false",
+          "submenu": []
+        }
+      ]
+    },
+    {
+      "path": "company",
+      "title": "Company",
+      "icon": "briefcase",
+      "class": "",
+      "groupTitle": false,
+      "submenu": []
+    },
+    {
+      "path": "",
+      "title": "Materials Management",
+      "icon": "box",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "submenu": [
+        {
+          "path": "measurement-unit",
+          "title": "Measurement List",
           "icon": "",
           "class": "ml-menu",
           "groupTitle": "false",

@@ -18,17 +18,15 @@ import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Subject } from 'rxjs';
-import { FormDialogComponent } from './dialogs-roles/form-dialog/form-dialog.component';
-import { DeleteDialogComponent } from './dialogs-roles/delete/delete.component';
+import { FormDialogComponent } from './dialogs-company/form-dialog/form-dialog.component';
+import { DeleteComponent } from './dialogs-company/delete/delete.component';
 import {
   MAT_DATE_LOCALE,
   MatOptionModule,
   MatRippleModule,
 } from '@angular/material/core';
-import { CommonModule, DatePipe, formatDate, NgClass } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { rowsAnimation, TableExportUtil } from '@shared';
-import { RolesService } from '@core/service/role.service';
-import { Role } from '@core/models/role.model';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -44,12 +42,13 @@ import { HttpClient } from '@angular/common/http';
 import { BreadcrumbComponent } from '@shared/components/breadcrumb/breadcrumb.component';
 import { Direction } from '@angular/cdk/bidi';
 import { TableShowHideColumnComponent } from '@shared/components/table-show-hide-column/table-show-hide-column.component';
-
+import { Company } from '@core/models/company.model';
+import { CompanyService } from '@core/service/company.service';
 
 @Component({
-  selector: 'app-role',
-  templateUrl: './role.component.html',
-  styleUrl: './role.component.scss',
+  selector: 'app-company',
+  templateUrl: './company.component.html',
+  styleUrl: './company.component.scss',
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   animations: [rowsAnimation],
   imports: [
@@ -77,16 +76,17 @@ import { TableShowHideColumnComponent } from '@shared/components/table-show-hide
     TableShowHideColumnComponent,
   ],
 })
-export class RoleComponent implements OnInit, OnDestroy {
+export class CompanyComponent implements OnInit, OnDestroy {
   columnDefinitions = [
     { def: 'select', label: 'Checkbox', type: 'check', visible: true },
-    { def: 'name', label: 'Name', type: 'text', visible: true },
-    { def: 'description', label: 'Description', type: 'text', visible: true },
+    { def: 'companyRuc', label: 'Ruc', type: 'text', visible: true },
+    { def: 'companyName', label: 'Name', type: 'text', visible: true },
+    { def: 'companyAddress', label: 'Address', type: 'text', visible: true },
     { def: 'status', label: 'Status', type: 'text', visible: true },
     { def: 'actions', label: 'Actions', type: 'actionBtn', visible: true },
   ];
-  dataSource = new MatTableDataSource<Role>([]);
-  selection = new SelectionModel<Role>(true, []);
+  dataSource = new MatTableDataSource<Company>([]);
+  selection = new SelectionModel<Company>(true, []);
   contextMenuPosition = { x: '0px', y: '0px' };
   isLoading = true;
   private destroy$ = new Subject<void>();
@@ -98,7 +98,7 @@ export class RoleComponent implements OnInit, OnDestroy {
 
   breadscrums = [
     {
-      title: 'ROLES',
+      title: 'COMPANIES',
       items: ['Home'],
       active: 'Table',
     },
@@ -106,9 +106,10 @@ export class RoleComponent implements OnInit, OnDestroy {
   constructor(
     public httpClient: HttpClient,
     public dialog: MatDialog,
-    public roleService: RolesService,
+    public companyService: CompanyService,
     private snackBar: MatSnackBar
   ) { }
+
   ngOnInit() {
     this.loadData();
   }
@@ -132,11 +133,11 @@ export class RoleComponent implements OnInit, OnDestroy {
     this.openDialog('add');
   }
 
-  editCall(row: Role) {
+  editCall(row: Company) {
     this.openDialog('edit', row);
   }
 
-  openDialog(action: 'add' | 'edit', data?: Role) {
+  openDialog(action: 'add' | 'edit', data?: Company) {
     let varDirection: Direction;
     if (localStorage.getItem('isRtl') === 'true') {
       varDirection = 'rtl';
@@ -146,7 +147,7 @@ export class RoleComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(FormDialogComponent, {
       width: '60vw',
       maxWidth: '100vw',
-      data: { role: data, action },
+      data: { company: data, action },
       direction: varDirection,
       autoFocus: false,
     });
@@ -154,9 +155,10 @@ export class RoleComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         if (action === 'add') {
+          setTimeout(() => {
+            this.refresh();
+          }, 300);
           this.dataSource.data = [result, ...this.dataSource.data];
-          this.refreshTable();
-          this.refresh();
         } else {
           this.updateRecord(result);
         }
@@ -171,9 +173,9 @@ export class RoleComponent implements OnInit, OnDestroy {
     });
   }
 
-  private updateRecord(updatedRecord: Role) {
+  private updateRecord(updatedRecord: Company) {
     const index = this.dataSource.data.findIndex(
-      (record) => record.idRole === updatedRecord.idRole
+      (record) => record.idCompany === updatedRecord.idCompany
     );
     if (index !== -1) {
       this.dataSource.data[index] = updatedRecord;
@@ -181,12 +183,12 @@ export class RoleComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteItem(row: Role) {
-    const dialogRef = this.dialog.open(DeleteDialogComponent, { data: row });
+  deleteItem(row: Company) {
+    const dialogRef = this.dialog.open(DeleteComponent, { data: row });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.dataSource.data = this.dataSource.data.filter(
-          (record) => record.idRole !== row.idRole
+          (record) => record.idCompany !== row.idCompany
         );
         this.refreshTable();
         this.showNotification(
@@ -237,24 +239,31 @@ export class RoleComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    this.isLoading = true;
+    this.isLoading = true; // Start loading
 
-    this.roleService.findAll().subscribe({
+    this.companyService.findAll().subscribe({
       next: (data) => {
-        this.dataSource.data = data;
+        this.dataSource.data = data; // Assign the data to your data source
         this.refreshTable();
-        this.dataSource.filterPredicate = (
-          data: Role,
-          filter: string
-        ) =>
-          Object.values(data).some((value) =>
-            value.toString().toLowerCase().includes(filter)
-          );
-        this.isLoading = false;
+        this.dataSource.filterPredicate = (data: Company, filter: string) => {
+          return Object.values(data).some((value) => {
+            if (value === null || value === undefined) return false;
+
+            // Si es objeto, accedemos a sus propiedades internas
+            if (typeof value === 'object') {
+              return Object.values(value).some((v) =>
+                v?.toString().toLowerCase().includes(filter)
+              );
+            }
+
+            return value.toString().toLowerCase().includes(filter);
+          });
+        };
+        this.isLoading = false; // Stop loading
       },
       error: (err) => {
         console.error(err);
-        this.isLoading = false;
+        this.isLoading = false; // Stop loading on error
       },
     });
   }
@@ -275,14 +284,17 @@ export class RoleComponent implements OnInit, OnDestroy {
 
   exportExcel() {
     const exportData = this.dataSource.filteredData.map((x) => ({
-      'Name': x.name,
-      Description: x.description,
-      Status: x.status,
+      ruc: x.companyRuc,
+      'name': x.companyName,
+      address: x.companyAddress,
+      //'Birth Date': formatDate(new Date(x.birthDate), 'yyyy-MM-dd', 'en') || '',
+      status: x.status === 1 ? 'Active' : 'Inactive',
     }));
+
     TableExportUtil.exportToExcel(exportData, 'excel');
   }
 
-  onContextMenu(event: MouseEvent, item: Role) {
+  onContextMenu(event: MouseEvent, item: Company) {
     event.preventDefault();
     this.contextMenuPosition = {
       x: `${event.clientX}px`,

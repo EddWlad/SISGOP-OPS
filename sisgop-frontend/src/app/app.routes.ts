@@ -32,6 +32,20 @@ export const APP_ROUTE: Route[] = [
             (m) => m.USER_ROUTE
           ),
       },
+      {
+        path: 'company',
+        loadChildren: () =>
+          import('./company/company.routes').then(
+            (m) => m.COMPANY_ROUTE
+          ),
+      },
+      {
+        path: 'measurement-unit',
+        loadChildren: () =>
+          import('./measurement/measurement-unit.routes').then(
+            (m) => m.MEASUREMENT_ROUTE
+          ),
+      },
     ],
   },
   {

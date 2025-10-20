@@ -18,17 +18,15 @@ import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Subject } from 'rxjs';
-import { FormDialogComponent } from './dialogs-roles/form-dialog/form-dialog.component';
-import { DeleteDialogComponent } from './dialogs-roles/delete/delete.component';
+import { FormDialogComponent } from './dialogs-measurement/form-dialog/form-dialog.component';
+import { DeleteComponent } from './dialogs-measurement/delete/delete.component';
 import {
   MAT_DATE_LOCALE,
   MatOptionModule,
   MatRippleModule,
 } from '@angular/material/core';
-import { CommonModule, DatePipe, formatDate, NgClass } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { rowsAnimation, TableExportUtil } from '@shared';
-import { RolesService } from '@core/service/role.service';
-import { Role } from '@core/models/role.model';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -44,12 +42,13 @@ import { HttpClient } from '@angular/common/http';
 import { BreadcrumbComponent } from '@shared/components/breadcrumb/breadcrumb.component';
 import { Direction } from '@angular/cdk/bidi';
 import { TableShowHideColumnComponent } from '@shared/components/table-show-hide-column/table-show-hide-column.component';
-
+import { MeasurementUnit } from '@core/models/measurementUnit.model';
+import { MeasurementUnitService } from '@core/service/measurement-unit.service';
 
 @Component({
-  selector: 'app-role',
-  templateUrl: './role.component.html',
-  styleUrl: './role.component.scss',
+  selector: 'app-measurement',
+  templateUrl: './measurement.component.html',
+  styleUrl: './measurement.component.scss',
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   animations: [rowsAnimation],
   imports: [
@@ -77,43 +76,45 @@ import { TableShowHideColumnComponent } from '@shared/components/table-show-hide
     TableShowHideColumnComponent,
   ],
 })
-export class RoleComponent implements OnInit, OnDestroy {
+export class MeasurementComponent implements OnInit, OnDestroy {
   columnDefinitions = [
     { def: 'select', label: 'Checkbox', type: 'check', visible: true },
-    { def: 'name', label: 'Name', type: 'text', visible: true },
-    { def: 'description', label: 'Description', type: 'text', visible: true },
-    { def: 'status', label: 'Status', type: 'text', visible: true },
+    { def: 'unitMeasurementName', label: 'Name', type: 'text', visible: true },
+    { def: 'status', label: 'Status', type: 'status', visible: true },
     { def: 'actions', label: 'Actions', type: 'actionBtn', visible: true },
   ];
-  dataSource = new MatTableDataSource<Role>([]);
-  selection = new SelectionModel<Role>(true, []);
+
+  dataSource = new MatTableDataSource<MeasurementUnit>([]);
+  selection = new SelectionModel<MeasurementUnit>(true, []);
   contextMenuPosition = { x: '0px', y: '0px' };
   isLoading = true;
   private destroy$ = new Subject<void>();
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('filter') filter!: ElementRef;
   @ViewChild(MatMenuTrigger) contextMenu?: MatMenuTrigger;
 
   breadscrums = [
     {
-      title: 'ROLES',
+      title: 'MEASUREMENT UNITS',
       items: ['Home'],
       active: 'Table',
     },
   ];
+
   constructor(
     public httpClient: HttpClient,
+    private measurementService: MeasurementUnitService,
     public dialog: MatDialog,
-    public roleService: RolesService,
     private snackBar: MatSnackBar
   ) { }
-  ngOnInit() {
+
+  ngOnInit(): void {
     this.loadData();
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -130,13 +131,14 @@ export class RoleComponent implements OnInit, OnDestroy {
 
   addNew() {
     this.openDialog('add');
+    this.loadData(); // El refresh se hará dentro del afterClosed()
   }
 
-  editCall(row: Role) {
-    this.openDialog('edit', row);
+  editCall(row: MeasurementUnit): void {
+    this.openDialog('edit', row); // 👈 usa openDialog igual que en company
   }
 
-  openDialog(action: 'add' | 'edit', data?: Role) {
+  openDialog(action: 'add' | 'edit', data?: MeasurementUnit) {
     let varDirection: Direction;
     if (localStorage.getItem('isRtl') === 'true') {
       varDirection = 'rtl';
@@ -144,9 +146,9 @@ export class RoleComponent implements OnInit, OnDestroy {
       varDirection = 'ltr';
     }
     const dialogRef = this.dialog.open(FormDialogComponent, {
-      width: '60vw',
+      width: '600px',
       maxWidth: '100vw',
-      data: { role: data, action },
+      data: { measurementUnit: data, action },
       direction: varDirection,
       autoFocus: false,
     });
@@ -154,9 +156,10 @@ export class RoleComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         if (action === 'add') {
+          setTimeout(() => {
+            this.refresh();
+          }, 300);
           this.dataSource.data = [result, ...this.dataSource.data];
-          this.refreshTable();
-          this.refresh();
         } else {
           this.updateRecord(result);
         }
@@ -171,9 +174,9 @@ export class RoleComponent implements OnInit, OnDestroy {
     });
   }
 
-  private updateRecord(updatedRecord: Role) {
+  private updateRecord(updatedRecord: MeasurementUnit) {
     const index = this.dataSource.data.findIndex(
-      (record) => record.idRole === updatedRecord.idRole
+      (record) => record.idMeasurementUnit === updatedRecord.idMeasurementUnit
     );
     if (index !== -1) {
       this.dataSource.data[index] = updatedRecord;
@@ -181,12 +184,12 @@ export class RoleComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteItem(row: Role) {
-    const dialogRef = this.dialog.open(DeleteDialogComponent, { data: row });
+  deleteItem(row: MeasurementUnit) {
+    const dialogRef = this.dialog.open(DeleteComponent, { data: row });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.dataSource.data = this.dataSource.data.filter(
-          (record) => record.idRole !== row.idRole
+          (record) => record.idMeasurementUnit !== row.idMeasurementUnit
         );
         this.refreshTable();
         this.showNotification(
@@ -237,24 +240,31 @@ export class RoleComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    this.isLoading = true;
+    this.isLoading = true; // Start loading
 
-    this.roleService.findAll().subscribe({
+    this.measurementService.findAll().subscribe({
       next: (data) => {
-        this.dataSource.data = data;
+        this.dataSource.data = data; // Assign the data to your data source
         this.refreshTable();
-        this.dataSource.filterPredicate = (
-          data: Role,
-          filter: string
-        ) =>
-          Object.values(data).some((value) =>
-            value.toString().toLowerCase().includes(filter)
-          );
-        this.isLoading = false;
+        this.dataSource.filterPredicate = (data: MeasurementUnit, filter: string) => {
+          return Object.values(data).some((value) => {
+            if (value === null || value === undefined) return false;
+
+            // Si es objeto, accedemos a sus propiedades internas
+            if (typeof value === 'object') {
+              return Object.values(value).some((v) =>
+                v?.toString().toLowerCase().includes(filter)
+              );
+            }
+
+            return value.toString().toLowerCase().includes(filter);
+          });
+        };
+        this.isLoading = false; // Stop loading
       },
       error: (err) => {
         console.error(err);
-        this.isLoading = false;
+        this.isLoading = false; // Stop loading on error
       },
     });
   }
@@ -275,14 +285,14 @@ export class RoleComponent implements OnInit, OnDestroy {
 
   exportExcel() {
     const exportData = this.dataSource.filteredData.map((x) => ({
-      'Name': x.name,
-      Description: x.description,
-      Status: x.status,
+      'name': x.unitMeasurementName,
+      status: x.status === 1 ? 'Active' : 'Inactive',
     }));
+
     TableExportUtil.exportToExcel(exportData, 'excel');
   }
 
-  onContextMenu(event: MouseEvent, item: Role) {
+  onContextMenu(event: MouseEvent, item: MeasurementUnit) {
     event.preventDefault();
     this.contextMenuPosition = {
       x: `${event.clientX}px`,
@@ -294,4 +304,5 @@ export class RoleComponent implements OnInit, OnDestroy {
       this.contextMenu.openMenu();
     }
   }
+
 }

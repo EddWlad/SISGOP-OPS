@@ -1,0 +1,80 @@
+<div class="dialogContainer">
+  <div class="modalHeader">
+    <div class="avatarDetails">
+      <input id="tableFileInput" type='file' (change)="onSelectFile($event)" multiple>
+      @if(fileName){
+      <label class="hoverable" for="tableFileInput">
+        <img [src]="url ? url : company.companyLogo" alt="image">
+        <div class="hover-text">{{fileName}}</div>
+        <div class="background"></div>
+      </label>
+      }
+      <div class="modalTitle">
+        {{dialogTitle}}
+      </div>
+    </div>
+    <button mat-icon-button mat-dialog-close class="modal-close-button" aria-label="Close dialog" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div mat-dialog-content>
+    <form class="form-field-full" [formGroup]="companyForm" (ngSubmit)="submit()">
+      <div class="row m-b-25">
+        <div class="col-sm-6">
+          <mat-form-field class="example-full-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>RUC</mat-label>
+            <input matInput formControlName="companyRuc">
+            <mat-icon class="material-icons-outlined color-icon p-3" matSuffix>vpn_key</mat-icon>
+            @if (companyForm.get('companyRuc')?.hasError('required')) {
+            <mat-error>
+              RUC is required
+            </mat-error>
+            }
+          </mat-form-field>
+        </div>
+        <div class="col-sm-6">
+          <mat-form-field class="example-full-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="companyName">
+            <mat-icon class="material-icons-outlined color-icon p-3" matSuffix>domain</mat-icon>
+            @if (companyForm.get('companyName')?.hasError('required')) {
+            <mat-error>
+              Name is required
+            </mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="row m-b-25">
+        <div class="col-sm-12">
+          <mat-form-field class="example-full-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Address</mat-label>
+            <textarea matInput formControlName="companyAddress"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="row m-b-25">
+        <div class="col-sm-6">
+          <mat-label class="msr-3">Status:</mat-label>
+          <mat-radio-group aria-label="Select Status" formControlName="status" required>
+            <mat-radio-button [value]=1 color="primary">Active</mat-radio-button>
+            <mat-radio-button [value]=2 color="primary">Inactive</mat-radio-button>
+            @if (companyForm.get('status')?.hasError('required')) {
+            <mat-error>
+              Select Status
+            </mat-error>
+            }
+          </mat-radio-group>
+        </div>
+      </div>
+      <div class="row m-b-25">
+        <div class="col-sm-6">
+          <div class="example-button-row">
+            <button mat-flat-button class="formSubmitBtn" [disabled]="!companyForm.valid" type="submit">Save</button>
+            <button mat-flat-button mat-dialog-close class="formCancelBtn" tabindex="-1">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<svg width="1400" height="420" viewBox="0 0 1400 420" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0E2A47"/>
+      <stop offset="100%" stop-color="#0E2A47"/>
+    </linearGradient>
+    <style>
+      .title { font: 800 180px 'Inter', 'Segoe UI', Arial, sans-serif; fill: #00B7F1; }
+      .subtitle { font: 500 48px 'Inter', 'Segoe UI', Arial, sans-serif; fill: #FFFFFF; opacity: .95; }
+    </style>
+  </defs>
+  <!-- emblem -->
+  <g transform="translate(64,64)">
+    <rect width="292" height="292" rx="64" fill="url(#g1)" stroke="white" stroke-opacity=".16" stroke-width="2"/>
+    <!-- bars -->
+    <g transform="translate(48,52)">
+      <rect x="0" y="0" width="160" height="32" rx="16" fill="white" opacity=".18"/>
+      <rect x="0" y="0" width="110" height="32" rx="16" fill="#00B7F1"/>
+      <rect x="0" y="66" width="225" height="32" rx="16" fill="white" opacity=".18"/>
+      <rect x="0" y="66" width="105" height="32" rx="16" fill="#00B7F1"/>
+      <rect x="0" y="132" width="190" height="32" rx="16" fill="white" opacity=".18"/>
+      <rect x="0" y="132" width="124" height="32" rx="16" fill="#00B7F1"/>
+    </g>
+    <!-- check -->
+    <path d="M78 200 L126 242 L220 148" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- text block -->
+  <g transform="translate(400,0)">
+    <text class="title" x="0" y="190">SISGOP</text>
+    <text class="subtitle" x="0" y="280">Sistema de Gestión Operativa de Proyectos</text>
+  </g>
+</svg>

@@ -1,0 +1,53 @@
+<div class="dialogContainer">
+  <div class="modalHeader">
+    <div class="avatarDetails">
+      <div class="modalTitle">
+        {{dialogTitle}}
+      </div>
+    </div>
+    <button mat-icon-button mat-dialog-close class="modal-close-button" aria-label="Close dialog" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div mat-dialog-content>
+    <form class="form-field-full" [formGroup]="measurementForm" (ngSubmit)="submit()">
+      <div class="row m-b-25">
+        <div class="col-sm-12">
+          <mat-form-field class="example-full-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="unitMeasurementName">
+            <mat-icon class="material-icons-outlined color-icon p-3" matSuffix>straighten</mat-icon>
+            @if (measurementForm.get('unitMeasurementName')?.hasError('required')) {
+            <mat-error>
+              Name is required
+            </mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="row m-b-25">
+        <div class="col-sm-6">
+          <mat-label class="msr-3">Status:</mat-label>
+          <mat-radio-group aria-label="Select Status" formControlName="status" required>
+            <mat-radio-button [value]=1 color="primary">Active</mat-radio-button>
+            <mat-radio-button [value]=2 color="primary">Inactive</mat-radio-button>
+            @if (measurementForm.get('status')?.hasError('required')) {
+            <mat-error>
+              Select Status
+            </mat-error>
+            }
+          </mat-radio-group>
+        </div>
+      </div>
+      <div class="row m-b-25">
+        <div class="col-sm-6">
+          <div class="example-button-row">
+            <button mat-flat-button class="formSubmitBtn" [disabled]="!measurementForm.valid"
+              type="submit">Save</button>
+            <button mat-flat-button mat-dialog-close class="formCancelBtn" tabindex="-1">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
