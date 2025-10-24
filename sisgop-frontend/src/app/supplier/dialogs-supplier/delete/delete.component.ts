@@ -1,4 +1,3 @@
-import { Component, Inject } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogRef,
@@ -7,13 +6,17 @@ import {
   MatDialogActions,
   MatDialogClose,
 } from '@angular/material/dialog';
-import { MaterialService } from '@core/service/material.service';
+
+import { Component, Inject } from '@angular/core';
+import { SupplierService } from '@core/service/supplier.service';
 import { MatButtonModule } from '@angular/material/button';
 
 export interface DialogData {
-  idMaterial: string;
-  materialName: string;
-  materialDescription: string;
+  idSupplier: string;
+  supplierName: string;
+  supplierRuc: string;
+  supplierEmail: string;
+  supplierPhone: string;
 }
 
 @Component({
@@ -27,23 +30,20 @@ export interface DialogData {
     MatButtonModule,
     MatDialogClose,
   ],
-
 })
+
 export class DeleteComponent {
   constructor(
     public dialogRef: MatDialogRef<DeleteComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
-    public materialService: MaterialService
+    public supplierService: SupplierService
   ) { }
   confirmDelete(): void {
-    this.materialService.delete(this.data.idMaterial).subscribe({
-      next: (response) => {
-        this.dialogRef.close(response); // Close with the response data
-        // Handle successful deletion, e.g., refresh the table or show a notification
-      },
+    this.supplierService.delete(this.data.idSupplier).subscribe({
+      next: () => this.dialogRef.close(true),   // <-- éxito
       error: (error) => {
         console.error('Delete Error:', error);
-        // Handle the error appropriately
+        this.dialogRef.close(false);            // <-- opcional: comunica fallo
       },
     });
   }

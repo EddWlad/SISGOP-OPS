@@ -3,10 +3,18 @@
   <div mat-dialog-content>
     <ul class="delete-list">
       <li>
-        <p><span class="font-weight-bold"> Name: </span>{{data.materialName}} </p>
+        <p><span class="font-weight-bold"> RUC: </span>{{data.supplierRuc}}</p>
       </li>
       <li>
-        <p><span class="font-weight-bold"> Description: </span>{{ data.materialDescription }}</p>
+        <p><span class="font-weight-bold"> Name: </span>{{data.supplierName}}</p>
+      </li>
+      <li>
+        <p><span class="font-weight-bold"> Email: </span>{{ data.supplierEmail }}</p>
+      </li>
+      <li>
+        <p>
+          <span class="font-weight-bold">Mobile: </span>{{data.supplierPhone}}
+        </p>
       </li>
     </ul>
   </div>

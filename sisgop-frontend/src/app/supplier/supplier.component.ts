@@ -5,9 +5,6 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { Material } from 'app/core/models/material.model';
-import { MaterialService } from 'app/core/service/material.service';
-
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -20,15 +17,17 @@ import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Subject } from 'rxjs';
-import { FormDialogComponent } from './dialogs-material/form-dialog/form-dialog.component';
-import { DeleteComponent } from './dialogs-material/delete/delete.component';
+import { FormDialogComponent } from './dialogs-supplier/form-dialog/form-dialog.component';
+import { DeleteComponent } from './dialogs-supplier/delete/delete.component';
 import {
   MAT_DATE_LOCALE,
   MatOptionModule,
   MatRippleModule,
 } from '@angular/material/core';
-import { CommonModule, DatePipe, formatDate, NgClass } from '@angular/common';
+import { CommonModule, formatDate, NgClass } from '@angular/common';
 import { rowsAnimation, TableExportUtil } from '@shared';
+import { SupplierService } from '@core/service/supplier.service';
+import { Supplier } from '@core/models/supplier.model';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -43,13 +42,12 @@ import { FeatherIconsComponent } from '@shared/components/feather-icons/feather-
 import { HttpClient } from '@angular/common/http';
 import { BreadcrumbComponent } from '@shared/components/breadcrumb/breadcrumb.component';
 import { Direction } from '@angular/cdk/bidi';
-import { image } from 'd3';
 import { TableShowHideColumnComponent } from '@shared/components/table-show-hide-column/table-show-hide-column.component';
 
 @Component({
-  selector: 'app-material',
-  templateUrl: './material.component.html',
-  styleUrl: './material.component.scss',
+  selector: 'app-supplier',
+  templateUrl: './supplier.component.html',
+  styleUrl: './supplier.component.scss',
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'en-GB' }],
   animations: [rowsAnimation],
   imports: [
@@ -76,19 +74,23 @@ import { TableShowHideColumnComponent } from '@shared/components/table-show-hide
     MatPaginatorModule,
     TableShowHideColumnComponent,
   ],
+
 })
-export class MaterialComponent {
+export class SupplierComponent implements OnInit, OnDestroy {
+
   columnDefinitions = [
     { def: 'select', label: 'Checkbox', type: 'check', visible: true },
-    { def: 'materialName', label: 'Name', type: 'text', visible: true },
-    { def: 'materialDescription', label: 'Description', type: 'text', visible: true },
-    { def: 'measurementUnit', label: 'Unidad', visible: true, type: 'text', cell: (row) => row.measurementUnit?.unitMeasurementName },
-    { def: 'status', label: 'Status', type: 'status', visible: true },
+    { def: 'supplierRuc', label: 'RUC', type: 'text', visible: true },
+    { def: 'supplierName', label: 'Name', type: 'text', visible: true },
+    { def: 'supplierEmail', label: 'Email', type: 'email', visible: true },
+    { def: 'supplierPhone', label: 'Mobile', type: 'phone', visible: true },
+    { def: 'supplierAddress', label: 'Address', type: 'address', visible: true },
+    { def: 'status', label: 'Status', type: 'text', visible: true },
     { def: 'actions', label: 'Actions', type: 'actionBtn', visible: true },
   ];
 
-  dataSource = new MatTableDataSource<Material>([]);
-  selection = new SelectionModel<Material>(true, []);
+  dataSource = new MatTableDataSource<Supplier>([]);
+  selection = new SelectionModel<Supplier>(true, []);
   contextMenuPosition = { x: '0px', y: '0px' };
   isLoading = true;
   private destroy$ = new Subject<void>();
@@ -100,7 +102,7 @@ export class MaterialComponent {
 
   breadscrums = [
     {
-      title: 'MATERIALS',
+      title: 'SUPPLIERS',
       items: ['Home'],
       active: 'Table',
     },
@@ -108,17 +110,16 @@ export class MaterialComponent {
 
   constructor(
     public httpClient: HttpClient,
-    private materialService: MaterialService,
     public dialog: MatDialog,
+    public supplierService: SupplierService,
     private snackBar: MatSnackBar
   ) { }
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.loadData();
-
   }
 
-  ngOnDestroy(): void {
+  ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -137,11 +138,11 @@ export class MaterialComponent {
     this.openDialog('add');
   }
 
-  editCall(row: Material) {
+  editCall(row: Supplier) {
     this.openDialog('edit', row);
   }
 
-  openDialog(action: 'add' | 'edit', data?: Material) {
+  openDialog(action: 'add' | 'edit', data?: Supplier) {
     let varDirection: Direction;
     if (localStorage.getItem('isRtl') === 'true') {
       varDirection = 'rtl';
@@ -151,7 +152,7 @@ export class MaterialComponent {
     const dialogRef = this.dialog.open(FormDialogComponent, {
       width: '60vw',
       maxWidth: '100vw',
-      data: { material: data, action },
+      data: { supplier: data, action },
       direction: varDirection,
       autoFocus: false,
     });
@@ -159,9 +160,6 @@ export class MaterialComponent {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         if (action === 'add') {
-          setTimeout(() => {
-            this.refresh();
-          }, 300);
           this.dataSource.data = [result, ...this.dataSource.data];
         } else {
           this.updateRecord(result);
@@ -176,10 +174,9 @@ export class MaterialComponent {
       }
     });
   }
-
-  private updateRecord(updatedRecord: Material) {
+  private updateRecord(updatedRecord: Supplier) {
     const index = this.dataSource.data.findIndex(
-      (record) => record.idMaterial === updatedRecord.idMaterial
+      (record) => record.idSupplier === updatedRecord.idSupplier
     );
     if (index !== -1) {
       this.dataSource.data[index] = updatedRecord;
@@ -187,12 +184,12 @@ export class MaterialComponent {
     }
   }
 
-  deleteItem(row: Material) {
+  deleteItem(row: Supplier) {
     const dialogRef = this.dialog.open(DeleteComponent, { data: row });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.dataSource.data = this.dataSource.data.filter(
-          (record) => record.idMaterial !== row.idMaterial
+          (record) => record.idSupplier !== row.idSupplier
         );
         this.refreshTable();
         this.showNotification(
@@ -244,25 +241,17 @@ export class MaterialComponent {
 
   loadData() {
     this.isLoading = true; // Start loading
-
-    this.materialService.findAll().subscribe({
+    this.supplierService.findAll().subscribe({
       next: (data) => {
         this.dataSource.data = data; // Assign the data to your data source
         this.refreshTable();
-        this.dataSource.filterPredicate = (data: Material, filter: string) => {
-          return Object.values(data).some((value) => {
-            if (value === null || value === undefined) return false;
-
-            // Si es objeto, accedemos a sus propiedades internas
-            if (typeof value === 'object') {
-              return Object.values(value).some((v) =>
-                v?.toString().toLowerCase().includes(filter)
-              );
-            }
-
-            return value.toString().toLowerCase().includes(filter);
-          });
-        };
+        this.dataSource.filterPredicate = (
+          data: Supplier,
+          filter: string
+        ) =>
+          Object.values(data).some((value) =>
+            value.toString().toLowerCase().includes(filter)
+          );
         this.isLoading = false; // Stop loading
       },
       error: (err) => {
@@ -288,15 +277,17 @@ export class MaterialComponent {
 
   exportExcel() {
     const exportData = this.dataSource.filteredData.map((x) => ({
-      'name': x.materialName,
-      description: x.materialDescription,
-      measurementUnit: x.measurementUnit?.unitMeasurementName,
-      status: x.status === 1 ? 'Active' : 'Inactive',
+      'First Name': x.supplierName,
+      RUC: x.supplierRuc,
+      Email: x.supplierEmail,
+      Mobile: x.supplierPhone,
+      Address: x.supplierAddress,
     }));
+
     TableExportUtil.exportToExcel(exportData, 'excel');
   }
 
-  onContextMenu(event: MouseEvent, item: Material) {
+  onContextMenu(event: MouseEvent, item: Supplier) {
     event.preventDefault();
     this.contextMenuPosition = {
       x: `${event.clientX}px`,
@@ -308,6 +299,5 @@ export class MaterialComponent {
       this.contextMenu.openMenu();
     }
   }
-
 
 }

@@ -18,7 +18,7 @@
     },
     {
       "path": "",
-      "title": "-- Administracion",
+      "title": "-- Administration",
       "icon": "",
       "class": "",
       "groupTitle": true,
@@ -58,6 +58,22 @@
       "submenu": []
     },
     {
+      "path": "supplier",
+      "title": "Suplier",
+      "icon": "grid",
+      "class": "",
+      "groupTitle": false,
+      "submenu": []
+    },
+    {
+      "path": "",
+      "title": "-- Management",
+      "icon": "",
+      "class": "",
+      "groupTitle": true,
+      "submenu": []
+    },
+    {
       "path": "",
       "title": "Materials Management",
       "icon": "box",
@@ -73,8 +89,8 @@
           "submenu": []
         },
         {
-          "path": "role",
-          "title": "Roles List",
+          "path": "material",
+          "title": "Materials List",
           "icon": "",
           "class": "ml-menu",
           "groupTitle": "false",

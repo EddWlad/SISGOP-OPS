@@ -40,10 +40,24 @@ export const APP_ROUTE: Route[] = [
           ),
       },
       {
+        path: 'supplier',
+        loadChildren: () =>
+          import('./supplier/supplier.routes').then(
+            (m) => m.SUPPLIER_ROUTE
+          ),
+      },
+      {
         path: 'measurement-unit',
         loadChildren: () =>
           import('./measurement/measurement-unit.routes').then(
             (m) => m.MEASUREMENT_ROUTE
+          ),
+      },
+      {
+        path: 'material',
+        loadChildren: () =>
+          import('./material/material.routes').then(
+            (m) => m.MATERIAL_ROUTE
           ),
       },
     ],
